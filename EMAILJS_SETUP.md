@@ -1,14 +1,48 @@
 # EmailJS Contact Form Setup
 
-This repository currently ships as a static HTML portfolio. The React contact form lives at `src/components/ContactForm.jsx` and is ready to use in a Vite React app.
+This repository includes a fully functional contact form with EmailJS integration. The contact form is implemented in both:
+- Static HTML: `contact.html` (ready to use)
+- React component: `src/components/ContactForm.jsx` (for Vite React apps)
 
-## Install dependencies
+## Static HTML Setup (Recommended for this portfolio)
 
-```bash
-npm install @emailjs/browser framer-motion
+### 1. Get EmailJS Credentials
+1. Sign up at [EmailJS](https://www.emailjs.com/)
+2. Create an email service
+3. Create an email template with these variables:
+   - `from_name`
+   - `reply_to` 
+   - `subject`
+   - `message`
+
+### 2. Update contact.html
+Replace the placeholder values in `contact.html`:
+```javascript
+// Line 399: Replace with your EmailJS public key
+emailjs.init("YOUR_PUBLIC_KEY");
+
+// Line 440: Replace with your service ID
+emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
 ```
 
-## Add the component
+### 3. Template Example
+Create an email template with this content:
+```
+Hello,
+
+You have a new message from {{from_name}} ({{reply_to}}):
+
+Subject: {{subject}}
+
+{{message}}
+
+---
+Sent via your portfolio contact form
+```
+
+## React Setup (Alternative)
+
+### Install dependencies
 
 Import the component wherever your contact section is rendered:
 

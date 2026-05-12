@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | Sandheep G S</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Three.js for 3D Background -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- EmailJS for contact form -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #020617; }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
+        }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .nav-link:hover {
+            color: #818cf8;
+            text-shadow: 0 0 10px rgba(129, 140, 248, 0.5);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4f46e5; }
+
+        /* Contact Form Styles */
+        .contact-form-shell {
+            position: relative;
+            width: min(100%, 760px);
+            margin: 0 auto;
+            padding: clamp(1.25rem, 4vw, 2.5rem);
+            overflow: hidden;
+            border: 1px solid rgba(129, 140, 248, 0.22);
+            border-radius: 2rem;
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.68)), rgba(15, 23, 42, 0.58);
+            box-shadow: 0 24px 80px rgba(2, 6, 23, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(18px);
+        }
+
+        .contact-form-shell::before {
+            position: absolute;
+            inset: -40% auto auto 50%;
+            width: 340px;
+            height: 340px;
+            pointer-events: none;
+            content: "";
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.22), transparent 68%);
+            transform: translateX(-50%);
+        }
+
+        .contact-form {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 1rem;
+            text-align: left;
+        }
+
+        .contact-form__grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .contact-field {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .contact-field span {
+            color: #818cf8;
+            font-family: "Inter", sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        .contact-field input,
+        .contact-field textarea {
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.1rem;
+            outline: none;
+            background: rgba(2, 6, 23, 0.58);
+            color: #f8fafc;
+            font-family: "Inter", sans-serif;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            padding: 1rem 1.1rem;
+            transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+        }
+
+        .contact-field textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .contact-field input::placeholder,
+        .contact-field textarea::placeholder {
+            color: rgba(148, 163, 184, 0.62);
+        }
+
+        .contact-field input:focus,
+        .contact-field textarea:focus {
+            border-color: rgba(129, 140, 248, 0.85);
+            background: rgba(15, 23, 42, 0.78);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.16), 0 0 28px rgba(129, 140, 248, 0.18);
+        }
+
+        .contact-submit {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 3.75rem;
+            margin-top: 0.25rem;
+            border: 1px solid rgba(129, 140, 248, 0.42);
+            border-radius: 1.1rem;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            box-shadow: 0 18px 48px rgba(79, 70, 229, 0.28);
+            color: #ffffff;
+            cursor: pointer;
+            font-family: "Inter", sans-serif;
+            font-size: 0.82rem;
+            font-weight: 800;
+            gap: 0.7rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            transition: opacity 180ms ease, box-shadow 180ms ease;
+        }
+
+        .contact-submit:hover {
+            box-shadow: 0 20px 56px rgba(79, 70, 229, 0.36), 0 0 22px rgba(129, 140, 248, 0.28);
+        }
+
+        .contact-submit:disabled {
+            cursor: not-allowed;
+            opacity: 0.76;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            padding: 1rem;
+            border-radius: 1rem;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 14px 44px rgba(2, 6, 23, 0.4);
+            color: #e2e8f0;
+            backdrop-filter: blur(10px);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .toast.error {
+            border-color: rgba(248, 113, 113, 0.3);
+        }
+
+        .toast-dot {
+            width: 0.65rem;
+            height: 0.65rem;
+            border-radius: 50%;
+            margin-top: 0.25rem;
+            box-shadow: 0 0 18px currentColor;
+        }
+
+        .toast.success .toast-dot {
+            background: #22c55e;
+            color: #22c55e;
+        }
+
+        .toast.error .toast-dot {
+            background: #f87171;
+            color: #f87171;
+        }
+
+        .toast strong {
+            display: block;
+            margin-bottom: 0.2rem;
+            color: #ffffff;
+            font-size: 0.9rem;
+        }
+
+        .toast p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 640px) {
+            .contact-form-shell {
+                border-radius: 1.5rem;
+            }
+            .contact-form__grid {
+                grid-template-columns: 1fr;
+            }
+            .contact-submit {
+                min-height: 3.4rem;
+                font-size: 0.76rem;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-200 selection:bg-indigo-500/30">
+
+    <!-- 3D Background Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 border-b border-white/5 bg-slate-950/50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="flex justify-between h-20 items-center">
+                <a href="index.html" class="flex items-center space-x-3 group">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <span class="text-white font-bold">SG</span>
+                    </div>
+                    <span class="text-white font-bold text-xl">Sandheep G S</span>
+                </a>
+
+                <div class="hidden md:flex space-x-8 text-xs font-bold tracking-[0.2em] text-slate-400">
+                    <a href="index.html" class="nav-link transition-all">HOME</a>
+                    <a href="index.html#about" class="nav-link transition-all">ABOUT</a>
+                    <a href="index.html#skills" class="nav-link transition-all">SKILLS</a>
+                    <a href="index.html#projects" class="nav-link transition-all">PROJECTS</a>
+                    <a href="contact.html" class="px-5 py-2 bg-indigo-600/10 border border-indigo-500/50 rounded-full text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all">CONTACT</a>
+                </div>
+                <button class="md:hidden text-white"><i data-lucide="menu"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contact Section -->
+    <section class="relative min-h-screen flex items-center justify-center pt-20">
+        <div class="max-w-4xl mx-auto px-6 w-full">
+            <div class="text-center mb-16">
+                <h1 class="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tighter text-glow">Let's Connect</h1>
+                <p class="text-slate-400 text-xl mb-4">Ready to bring your ideas to life? Let's collaborate.</p>
+                <p class="text-slate-500">Fill out the form below and I'll get back to you within 24 hours.</p>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="contact-form-shell">
+                <!-- Toast Container -->
+                <div id="toast" class="toast">
+                    <span class="toast-dot"></span>
+                    <div>
+                        <strong id="toast-title">Message sent</strong>
+                        <p id="toast-message">Thanks for reaching out. I will get back to you soon.</p>
+                    </div>
+                </div>
+
+                <form id="contactForm" class="contact-form">
+                    <div class="contact-form__grid">
+                        <label class="contact-field">
+                            <span>Name</span>
+                            <input type="text" name="name" placeholder="Your Name" required />
+                        </label>
+
+                        <label class="contact-field">
+                            <span>Email</span>
+                            <input type="email" name="email" placeholder="you@example.com" required />
+                        </label>
+                    </div>
+
+                    <label class="contact-field">
+                        <span>Subject</span>
+                        <input type="text" name="subject" placeholder="Project collaboration" required />
+                    </label>
+
+                    <label class="contact-field">
+                        <span>Message</span>
+                        <textarea name="message" placeholder="Tell me about your idea, timeline, or role." rows="6" required></textarea>
+                    </label>
+
+                    <button type="submit" class="contact-submit" id="submitBtn">
+                        Send Message
+                    </button>
+                </form>
+            </div>
+
+            <!-- Alternative Contact Methods -->
+            <div class="mt-16 text-center">
+                <p class="text-slate-500 mb-8">Or reach out directly</p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <!-- Email -->
+                    <a href="mailto:gssandheep9@gmail.com" class="glass px-6 py-4 rounded-2xl flex items-center gap-3 hover:border-indigo-500/50 transition-all group">
+                        <i data-lucide="mail" class="text-indigo-400 group-hover:scale-110 transition-transform"></i>
+                        <span class="text-sm font-bold tracking-widest uppercase">Email</span>
+                    </a>
+
+                    <!-- LinkedIn -->
+                    <a href="https://linkedin.com/in/gssandheep9" target="_blank" class="glass px-6 py-4 rounded-2xl flex items-center gap-3 hover:border-indigo-500/50 transition-all group">
+                        <i data-lucide="linkedin" class="text-indigo-400 group-hover:scale-110 transition-transform"></i>
+                        <span class="text-sm font-bold tracking-widest uppercase">LinkedIn</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-white/5 text-center text-slate-500 text-xs uppercase tracking-widest">
+        © 2024 Sandheep G S. All Rights Reserved.
+    </footer>
+
+    <!-- 3D Background Script -->
+    <script>
+        let scene, camera, renderer, stars, starGeo;
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.z = 1;
+            camera.rotation.x = Math.PI / 2;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            starGeo = new THREE.BufferGeometry();
+            let positions = [];
+            for(let i=0; i<6000; i++) {
+                positions.push(Math.random() * 600 - 300);
+                positions.push(Math.random() * 600 - 300);
+                positions.push(Math.random() * 600 - 300);
+            }
+            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+            let sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/circle.png');
+            let starMaterial = new THREE.PointsMaterial({
+                color: 0x4f46e5,
+                size: 0.7,
+                map: sprite,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            stars = new THREE.Points(starGeo, starMaterial);
+            scene.add(stars);
+
+            animate();
+        }
+
+        function animate() {
+            stars.rotation.y += 0.001;
+            stars.rotation.x += 0.0005;
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+        lucide.createIcons();
+
+        // Initialize EmailJS
+        (function() {
+            emailjs.init("YLrZSqWNHWw1nUoIX"); // Replace with your EmailJS public key
+        })();
+
+        // Toast notification function
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toast-title');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            toast.className = `toast ${type}`;
+            
+            // Show toast
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            // Hide toast after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 5000);
+        }
+
+        // Contact Form Handler
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Send email using EmailJS
+            emailjs.send('service_qqs5e57', 'template_xretvkn', {
+                from_name: data.name,
+                reply_to: data.email,
+                subject: data.subject,
+                message: data.message
+            })
+            .then(function(response) {
+                console.log('SUCCESS!', response.status, response.text);
+                showToast('Message sent successfully!', 'Thanks for reaching out. I will get back to you soon.', 'success');
+                document.getElementById('contactForm').reset();
+            })
+            .catch(function(error) {
+                console.log('FAILED...', error);
+                showToast('Something went wrong', 'Please try again in a moment or email me directly at gssandheep9@gmail.com', 'error');
+            })
+            .finally(function() {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            });
+        });
+    </script>
+</body>
+</html>
