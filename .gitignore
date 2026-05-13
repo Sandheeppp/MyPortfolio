@@ -1,3 +1,6 @@
 .env
-node_modules/
-dist/
+my-react-portfolio/node_modules/
+my-react-portfolio/dist/
+.env.react
+node_modules
+dist
